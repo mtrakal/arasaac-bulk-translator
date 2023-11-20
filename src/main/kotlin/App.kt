@@ -68,13 +68,13 @@ class App : KoinComponent {
         val translatedKeys = Translator().loadTranslatedFile(keysForTranslate)
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-        val now = LocalDateTime.now().format(formatter)
+        val lastModified = LocalDateTime.now().minusDays(7).format(formatter)
 
         pictograms.forEach { pictogram ->
             pictogram.apply {
                 translatedKeys[_id]?.let {
                     keywords = it
-                    lastUpdated = now
+                    lastUpdated = lastModified
                 }
             }
         }
