@@ -1,24 +1,34 @@
 plugins {
-    kotlin("jvm") version "1.9.0"
     application
-    kotlin("plugin.serialization") version "1.6.0"
+    alias(libs.plugins.plugin.serialization)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.ktlint)
 }
 
-group = "cz.mtrakal"
+group = "cz.mtrakal.arasaac.bulktranslator"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    testImplementation(kotlin("test"))
+    implementation(libs.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.converter)
 
-    // https://mvnrepository.com/artifact/com.deepl.api/deepl-java
-    implementation("com.deepl.api:deepl-java:1.4.0")
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.core.coroutines)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
 
+    implementation(libs.retrofit)
+
+    implementation(libs.logging)
+    implementation(libs.slf4j.simple)
+
+    implementation(libs.sandwich)
+    implementation(libs.sandwich.retrofit)
+    implementation(libs.sandwich.retrofit.serialization)
 }
 
 tasks.test {
@@ -26,7 +36,7 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(17)
 }
 
 application {

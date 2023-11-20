@@ -1,0 +1,19 @@
+root = true
+
+[*]
+insert_final_newline = true
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+max_line_length = 130
+wildcard_import_limit = 0
+ij_kotlin_name_count_to_use_star_import = 99
+ij_kotlin_name_count_to_use_star_import_for_members = 99
+ij_kotlin_allow_trailing_comma = true
+ktlint_code_style = ktlint_official # intellij_idea or android_studio or ktlint_official (default)
+ktlint_standard = enabled
+ktlint_experimental = disabled # Enable/disable all `experimental` rules from all rule sets provided by KtLint or other rule providers
+
+[*.kts]
+max_line_length = 200

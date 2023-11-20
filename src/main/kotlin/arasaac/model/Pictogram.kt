@@ -1,4 +1,4 @@
-package model
+package arasaac.model
 
 import PictogramId
 import kotlinx.serialization.Serializable
@@ -16,7 +16,7 @@ data class Pictogram(
     val downloads: Int,
     val hair: Boolean,
     var keywords: List<Keyword>,
-    val lastUpdated: String,
+    var lastUpdated: String,
     val published: Boolean,
     val schematic: Boolean,
     val sex: Boolean,
@@ -24,5 +24,5 @@ data class Pictogram(
     val synsets: List<String>,
     val tags: List<String>,
     var validated: Boolean,
-    val violence: Boolean
+    val violence: Boolean,
 )

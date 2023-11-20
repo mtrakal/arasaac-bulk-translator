@@ -1,4 +1,4 @@
-package model
+package arasaac.model
 
 import kotlinx.serialization.Serializable
 
@@ -8,5 +8,5 @@ data class Keyword(
     var keyword: String,
     var meaning: String? = null,
     var plural: String? = null,
-    val type: Int? = null
+    val type: Int? = null,
 )
