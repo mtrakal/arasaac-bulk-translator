@@ -29,6 +29,10 @@ dependencies {
     implementation(libs.sandwich)
     implementation(libs.sandwich.retrofit)
     implementation(libs.sandwich.retrofit.serialization)
+
+    // https://mvnrepository.com/artifact/org.apache.poi/poi
+    implementation(libs.apache.poi)
+    implementation(libs.apache.poi.ooxml)
 }
 
 tasks.test {

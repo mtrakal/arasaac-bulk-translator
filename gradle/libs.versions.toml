@@ -13,6 +13,7 @@ okhttp-bom = "4.12.0"
 retrofit = "2.9.0"
 logging = "5.1.0"
 sandwich = "2.0.1"
+apache-poi = "5.2.4"
 
 [plugins]
 plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinx-serialization" }
@@ -38,3 +39,5 @@ sandwich = { module = "com.github.skydoves:sandwich", version.ref = "sandwich" }
 sandwich-retrofit = { module = "com.github.skydoves:sandwich-retrofit", version.ref = "sandwich" }
 sandwich-retrofit-serialization = { module = "com.github.skydoves:sandwich-retrofit-serialization", version.ref = "sandwich" }
 slf4j-simple =  "org.slf4j:slf4j-simple:2.0.3"
+apache-poi = { module = "org.apache.poi:poi", version.ref = "apache-poi"}
+apache-poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "apache-poi"}

@@ -11,13 +11,13 @@ import com.skydoves.sandwich.onSuccess
 import com.skydoves.sandwich.retrofit.errorBody
 import com.skydoves.sandwich.retrofit.statusCode
 import core.Logger
-import core.Translator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import translator.Translator
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -28,10 +28,8 @@ class App : KoinComponent {
     private val pictogramsApi: PictogramsApi by inject()
     private val accessToken: AccessToken by inject()
     private val logger: Logger by inject()
-
-    private val jsonOutputSerializer = Json {
-        prettyPrint = true
-    }
+    private val translator: Translator by inject()
+    private val jsonOutputSerializer: Json by inject()
 
     init {
 //        login()
@@ -61,11 +59,7 @@ class App : KoinComponent {
             }
         }
 
-        Translator().prepareFileForTranslate(keysForTranslate)
-
-        println("Translate file: ${Translator.FILE_NAME}${Translator.FILE_EXTENSION} and after press any key to continue...")
-        System.`in`.read()
-        val translatedKeys = Translator().loadTranslatedFile(keysForTranslate)
+        val translatedKeys = translator.translate(keysForTranslate)
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         val lastModified = LocalDateTime.now().minusDays(7).format(formatter)

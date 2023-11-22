@@ -1,37 +1,47 @@
-package core
+package translator
 
-import PictogramId
-import arasaac.model.Keyword
-import java.io.File
+import core.Type
+import files.FileWriter
 
-class Translator {
+class TranslatorManualImpl(private val fileWriter: FileWriter) : Translator {
 
     companion object {
         const val FILE_NAME = "translate_this_file"
-        const val FILE_EXTENSION = ".txt"
     }
 
-    fun prepareFileForTranslate(
-        pictoKeywords: Map<PictogramId, List<Keyword>>,
-        filename: String = "$FILE_NAME$FILE_EXTENSION",
+    private val fileExtension: String
+        get() = ".${fileWriter.type.extension}"
+
+    override fun translate(pictoKeywords: PictogramKeywords): PictogramKeywords {
+        prepareFileForTranslate(pictoKeywords)
+
+        println("Translate file: ${FILE_NAME}$fileExtension and after press any key to continue...")
+        System.`in`.read()
+
+        return loadTranslatedFile(pictoKeywords)
+    }
+
+    private fun prepareFileForTranslate(
+        pictoKeywords: PictogramKeywords,
+        filename: String = "$FILE_NAME$fileExtension",
     ) {
         val stringsToTranslate = convertToStrings(pictoKeywords)
 
-        File(filename).writeText(stringsToTranslate.joinToString("\n"))
+        fileWriter.write(filename, stringsToTranslate)
     }
 
-    fun loadTranslatedFile(
-        pictoKeywords: Map<PictogramId, List<Keyword>>,
-        filename: String = "$FILE_NAME$FILE_EXTENSION",
-    ): Map<PictogramId, List<Keyword>> {
-        val translatedStrings = File(filename).readText().split("\n")
+    private fun loadTranslatedFile(
+        pictoKeywords: PictogramKeywords,
+        filename: String = "$FILE_NAME$fileExtension",
+    ): PictogramKeywords {
+        val translatedStrings = fileWriter.read(filename)
         return convertFromStrings(pictoKeywords, translatedStrings)
     }
 
     private fun convertFromStrings(
-        pictograms: Map<PictogramId, List<Keyword>>,
+        pictograms: PictogramKeywords,
         translatedStrings: List<String>,
-    ): Map<PictogramId, List<Keyword>> = pictograms.map { (pictoId, keywords) ->
+    ): PictogramKeywords = pictograms.map { (pictoId, keywords) ->
 
         val translatedKeywords = translatedStrings.filter { it.startsWith("$pictoId:") }.groupBy { it.split("::").first() }.let {
             it.map {
@@ -55,7 +65,7 @@ class Translator {
     private fun getText(translatedStrings: List<String>, type: Type): String? =
         translatedStrings.firstOrNull { it.contains("${type.id}:::") }?.split(":::")?.last()?.trim()?.takeIf { it.isNotBlank() }
 
-    private fun convertToStrings(pictoKeywords: Map<PictogramId, List<Keyword>>): List<String> =
+    private fun convertToStrings(pictoKeywords: PictogramKeywords): List<String> =
         pictoKeywords.flatMap { (pictoId, keywords) ->
             keywords.flatMapIndexed { index, keyword ->
                 listOf(
