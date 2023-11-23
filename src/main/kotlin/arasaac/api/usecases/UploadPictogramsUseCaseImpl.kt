@@ -23,7 +23,7 @@ class UploadPictogramsUseCaseImpl(
             pictograms.pictograms.forEachIndexed { index, pictogram ->
                 pictogramsApi.putPictogram(EncapsulatedPictogram(targetLanguage, pictogram))
                     .onSuccess {
-                        println("Pictogram ${pictogram._id} updated")
+                        println("Pictogram ${pictogram.id} updated")
                     }
                     .onFailure {
                         this.handleError()

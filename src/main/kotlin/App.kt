@@ -42,8 +42,8 @@ class App : KoinComponent {
                 return@mapNotNull null
             }
 
-            val keywordsEn = pictogramsEn.firstOrNull { pictogram._id == it._id }?.keywords
-            keywordsEn?.let { pictogram._id to it }
+            val keywordsEn = pictogramsEn.firstOrNull { pictogram.id == it.id }?.keywords
+            keywordsEn?.let { pictogram.id to it }
         }.toMap()
 
         val translatedKeys = translator.translate(keysForTranslate)
@@ -62,8 +62,8 @@ class App : KoinComponent {
 
         jsonWriter.write("$targetLanguage.translated.json", translatedAllPictograms.pictograms)
 
-        println("Do you really upload all translated pictograms back to arasaac.org? (y/n)")
-        val answer = readln()
+        println("Do you really want upload all translated pictograms back to arasaac.org? (y/n)")
+        val answer = readln().lowercase()
         if (answer == "y") {
 
             arasaacAuth.getAccessToken {
@@ -85,7 +85,7 @@ class App : KoinComponent {
         val pictogramList = AllTranslatedPictograms(
             targetPictograms.map { pictogram ->
                 pictogram.copy().apply {
-                    translatedKeys[_id]
+                    translatedKeys[id]
                         ?.takeIf { it.isNotEmpty() }
                         ?.let {
                             keywords = it
