@@ -1,12 +1,13 @@
 package files
 
-interface FileWriter {
+interface FileWriter<T> {
     val type: Type
-    fun write(filename: String, content: List<String>)
-    fun read(filename: String): List<String>
+    fun write(filename: String, content: T)
+    fun read(filename: String): T
 
     enum class Type(val extension: String) {
         PLAIN_TEXT("txt"),
         DOCX("docx"),
+        JSON("json"),
     }
 }

@@ -6,7 +6,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument
 import org.apache.poi.xwpf.usermodel.XWPFParagraph
 import java.io.File
 
-class FileWriterDocxImpl : FileWriter {
+class FileWriterDocxImpl : FileWriter<List<String>> {
 
     override val type = FileWriter.Type.DOCX
     override fun write(filename: String, content: List<String>) {
@@ -27,20 +27,19 @@ class FileWriterDocxImpl : FileWriter {
 
     private fun XWPFDocument.addParagraph(content: List<String>) {
         // creating a paragraph in our document and setting its alignment
-        createParagraph().apply {
-            alignment = ParagraphAlignment.LEFT
-            // add text
-            addRun(content)
+        content.forEach { line ->
+            createParagraph().apply {
+                alignment = ParagraphAlignment.LEFT
+                // add text
+                addRun(line)
+            }
         }
     }
 
-    private fun XWPFParagraph.addRun(content: List<String>) {
+    private fun XWPFParagraph.addRun(content: String) {
         createRun().apply {
             fontSize = 8
-            content.forEach { line ->
-                setText(line)
-                addBreak()
-            }
+            setText(content)
         }
     }
 }

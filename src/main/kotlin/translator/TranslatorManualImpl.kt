@@ -1,9 +1,9 @@
 package translator
 
-import core.Type
 import files.FileWriter
+import model.Type
 
-class TranslatorManualImpl(private val fileWriter: FileWriter) : Translator {
+class TranslatorManualImpl(private val fileWriter: FileWriter<List<String>>) : Translator {
 
     companion object {
         const val FILE_NAME = "translate_this_file"

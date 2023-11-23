@@ -1,4 +1,4 @@
-package core
+package logging
 
 interface Logger {
     fun d(message: String)

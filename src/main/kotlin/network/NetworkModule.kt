@@ -5,8 +5,8 @@ import arasaac.model.AccessToken
 import arasaac.model.AccessTokenImpl
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.skydoves.sandwich.retrofit.adapters.ApiResponseCallAdapterFactory
-import core.Logger
 import kotlinx.serialization.json.Json
+import logging.Logger
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

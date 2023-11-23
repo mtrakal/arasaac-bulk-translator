@@ -1,4 +1,4 @@
-package core
+package logging
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging

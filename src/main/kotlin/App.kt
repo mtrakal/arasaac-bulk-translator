@@ -1,171 +1,100 @@
-import arasaac.api.LoginApi
-import arasaac.api.PictogramsApi
-import arasaac.api.request.AccessTokenRequest
-import arasaac.model.AccessToken
-import arasaac.model.EncapsulatedPictogram
-import arasaac.model.Keyword
+import arasaac.api.auth.ArasaacAuth
+import arasaac.api.usecases.DownloadPictogramsUseCase
+import arasaac.api.usecases.UploadPictogramsUseCase
 import arasaac.model.Pictogram
-import com.skydoves.sandwich.ApiResponse
-import com.skydoves.sandwich.onFailure
-import com.skydoves.sandwich.onSuccess
-import com.skydoves.sandwich.retrofit.errorBody
-import com.skydoves.sandwich.retrofit.statusCode
-import core.Logger
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import files.FileWriter
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.qualifier.named
+import translator.PictogramKeywords
 import translator.Translator
-import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.time.Duration.Companion.milliseconds
+
+@JvmInline
+value class AllTranslatedPictograms(val pictograms: List<Pictogram>)
+
+@JvmInline
+value class ChangedOnlyPictograms(val pictograms: List<Pictogram>)
 
 class App : KoinComponent {
-    private val loginApi: LoginApi by inject()
-    private val pictogramsApi: PictogramsApi by inject()
-    private val accessToken: AccessToken by inject()
-    private val logger: Logger by inject()
     private val translator: Translator by inject()
-    private val jsonOutputSerializer: Json by inject()
+    private val uploadPictogramsUseCase: UploadPictogramsUseCase by inject()
+    private val downloadPictogramsUseCase: DownloadPictogramsUseCase by inject()
+    private val jsonWriter: FileWriter<List<Pictogram>> by inject(named(FileWriter.Type.JSON))
+    private val arasaacAuth: ArasaacAuth by inject(named(ArasaacAuth.Type.BEARER))
 
     init {
-//        login()
-        loginToken()
+        arasaacAuth.getAccessToken {
+            if (it.token.isBlank()) {
+                error("Token is not provided!")
+            }
+        }
 
-        val en = mutableListOf<Pictogram>()
-        loadPictograms("en") {
-            en.addAll(it)
+        val pictogramsEn = mutableListOf<Pictogram>()
+        downloadPictogramsUseCase.loadPictograms("en") {
+            pictogramsEn.addAll(it)
         }
 
         println("Enter target language (ISO 639-1):")
         val targetLanguage = readln()
-        val target = mutableListOf<Pictogram>()
-        loadPictograms(targetLanguage) {
-            target.addAll(it)
+        val targetPictograms = mutableListOf<Pictogram>()
+        downloadPictogramsUseCase.loadPictograms(targetLanguage) {
+            targetPictograms.addAll(it)
         }
 
-        val keysForTranslate = mutableMapOf<PictogramId, List<Keyword>>()
-
-        val pictograms = target.onEach { pictogram ->
-            pictogram.apply {
-                if (keywords.isEmpty()) {
-                    val keywordsOrigin = en.firstOrNull { pictogram._id == it._id }?.keywords.orEmpty()
-                    validated = false
-                    keysForTranslate[_id] = keywordsOrigin
-                }
+        val keysForTranslate: PictogramKeywords = targetPictograms.mapNotNull { pictogram ->
+            if (pictogram.validated || pictogram.keywords.isNotEmpty()) {
+                return@mapNotNull null
             }
-        }
+
+            val keywordsEn = pictogramsEn.firstOrNull { pictogram._id == it._id }?.keywords
+            keywordsEn?.let { pictogram._id to it }
+        }.toMap()
 
         val translatedKeys = translator.translate(keysForTranslate)
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-        val lastModified = LocalDateTime.now().minusDays(7).format(formatter)
+        val lastModified = LocalDateTime.now().format(formatter)
 
-        pictograms.forEach { pictogram ->
-            pictogram.apply {
-                translatedKeys[_id]?.let {
-                    keywords = it
-                    lastUpdated = lastModified
-                }
-            }
-        }
+        val (
+            translatedAllPictograms: AllTranslatedPictograms,
+            changedOnlyPictograms: ChangedOnlyPictograms,
+        ) = getTranslatedAllPictograms(
+            targetPictograms,
+            translatedKeys,
+            lastModified,
+        )
 
-        storeJsonToFile("$targetLanguage.translated.json", jsonOutputSerializer.encodeToString(pictograms))
+        jsonWriter.write("$targetLanguage.translated.json", translatedAllPictograms.pictograms)
 
         println("Do you really upload all translated pictograms back to arasaac.org? (y/n)")
         val answer = readln()
         if (answer == "y") {
-            uploadPictograms(targetLanguage, pictograms)
+            uploadPictogramsUseCase.uploadPictograms(targetLanguage, changedOnlyPictograms)
         }
     }
 
-    private fun uploadPictograms(targetLanguage: String, pictograms: MutableList<Pictogram>) {
-        runBlocking {
-            pictograms.forEachIndexed { index, pictogram ->
-                pictogramsApi.putPictogram(EncapsulatedPictogram(targetLanguage, pictogram))
-                    .onSuccess {
-                        println("Pictogram ${pictogram._id} updated")
-                    }
-                    .onFailure {
-                        this.handleError()
-                    }
-                // Don't overload server
-                delay(50.milliseconds)
-                print("Progress ${pictograms.indexOf(pictogram) + 1}/${pictograms.size}\r")
-            }
-        }
-    }
-
-    private fun ApiResponse.Failure<*>.handleError() {
-        when (this) {
-            is ApiResponse.Failure.Error -> {
-                logger.e("Error: ${this.statusCode}: ${this.errorBody?.toString()}")
-            }
-
-            is ApiResponse.Failure.Exception -> {
-                logger.e(this.throwable)
-            }
-        }
-    }
-
-    private fun loadPictograms(locale: String, onSuccess: (List<Pictogram>) -> Unit) {
-        runBlocking {
-            pictogramsApi.getPictograms(locale)
-                .onSuccess {
-                    println("Pictograms in '$locale' loaded")
-                    storeJsonToFile("$locale.json", this.data.toJson)
-                    onSuccess(this.data)
+    private fun getTranslatedAllPictograms(
+        targetPictograms: MutableList<Pictogram>,
+        translatedKeys: PictogramKeywords,
+        lastModified: String,
+    ): Pair<AllTranslatedPictograms, ChangedOnlyPictograms> {
+        val changedOnlyPictograms = mutableListOf<Pictogram>()
+        val pictogramList = AllTranslatedPictograms(
+            targetPictograms.map { pictogram ->
+                pictogram.copy().apply {
+                    translatedKeys[_id]
+                        ?.takeIf { it.isNotEmpty() }
+                        ?.let {
+                            keywords = it
+                            lastUpdated = lastModified
+                        }?.also {
+                            changedOnlyPictograms.add(this)
+                        }
                 }
-                .onFailure {
-                    error("Pictograms in '$locale' not loaded")
-                }
-        }
+            },
+        )
+        return Pair(pictogramList, ChangedOnlyPictograms(changedOnlyPictograms.toList()))
     }
-
-    /**
-     * Not working, because of security reasons - api calls not allowed outside of arasaac.org
-     */
-    private fun login() {
-        println("Enter your Arasaac username:")
-        val username = readln()
-        println("Enter your Arasaac password:")
-        val password = readln()
-
-        runBlocking {
-            loginApi.login(AccessTokenRequest(username = username, password = password))
-                .onSuccess {
-                    println("Login success")
-                }
-                .onFailure {
-                    error("Login failure")
-                }
-        }
-    }
-
-    private fun loginToken() {
-        println("Enter your Bearer token (from Developer console):")
-        accessToken.token = readln()
-    }
-
-    private fun readFileAndParseToJson(filename: String): List<Pictogram> {
-        readJsonFromFile(filename).let { json ->
-            return Json.decodeFromString(json)
-        }
-    }
-
-    private fun readJsonFromFile(filename: String): String {
-        val file = File(filename)
-        return file.readText(Charsets.UTF_8)
-    }
-
-    private fun storeJsonToFile(filename: String, json: String) {
-        val file = File(filename)
-        file.writeText(json)
-    }
-
-    private val List<Pictogram>.toJson
-        get() = jsonOutputSerializer.encodeToString(this)
 }
