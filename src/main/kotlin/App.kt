@@ -25,12 +25,6 @@ class App : KoinComponent {
     private val arasaacAuth: ArasaacAuth by inject(named(ArasaacAuth.Type.BEARER))
 
     init {
-        arasaacAuth.getAccessToken {
-            if (it.token.isBlank()) {
-                error("Token is not provided!")
-            }
-        }
-
         val pictogramsEn = mutableListOf<Pictogram>()
         downloadPictogramsUseCase.loadPictograms("en") {
             pictogramsEn.addAll(it)
@@ -71,6 +65,13 @@ class App : KoinComponent {
         println("Do you really upload all translated pictograms back to arasaac.org? (y/n)")
         val answer = readln()
         if (answer == "y") {
+
+            arasaacAuth.getAccessToken {
+                if (it.token.isBlank()) {
+                    error("Token is not provided!")
+                }
+            }
+
             uploadPictogramsUseCase.uploadPictograms(targetLanguage, changedOnlyPictograms)
         }
     }
