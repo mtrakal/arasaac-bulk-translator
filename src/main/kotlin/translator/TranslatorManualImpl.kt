@@ -47,17 +47,17 @@ class TranslatorManualImpl(private val fileWriter: FileWriter<List<String>>) : T
             it.map {
                 val keywordText = getText(it.value, Type.KEYWORD).orEmpty()
                 val pluralText = getText(it.value, Type.PLURAL)
-                val meaningText = null // getText(it.value, Type.MEANING)
-                Triple(keywordText, pluralText, meaningText)
+                Pair(keywordText, pluralText)
             }
         }
 
         pictoId to keywords.mapIndexed { index, keyword ->
-            val (keywordText, pluralText, meaningText) = translatedKeywords[index]
+            val (keywordText, pluralText) = translatedKeywords[index]
             keyword.copy(
+                hasLocution = false,
                 keyword = keywordText,
                 plural = pluralText,
-                meaning = meaningText,
+                meaning = null,
             )
         }
     }.toMap()
@@ -71,7 +71,6 @@ class TranslatorManualImpl(private val fileWriter: FileWriter<List<String>>) : T
                 listOf(
                     "$pictoId:$index::${Type.KEYWORD.id}::: ${keyword.keyword}",
                     "$pictoId:$index::${Type.PLURAL.id}::: ${keyword.plural.orEmpty()}",
-//                    "$pictoId:$index::${Type.MEANING.id}::: ${keyword.meaning.orEmpty()}",
                 )
             }
         }

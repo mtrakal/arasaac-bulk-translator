@@ -33,6 +33,17 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.poi/poi
     implementation(libs.apache.poi)
     implementation(libs.apache.poi.ooxml)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.koin.test) {
+        exclude("junit", "junit")
+        exclude("org.jetbrains.kotlin", "kotlin-test-junit")
+    }
+    testImplementation(libs.koin.test.junit) {
+        exclude("junit", "junit")
+        exclude("org.jetbrains.kotlin", "kotlin-test-junit")
+    }
 }
 
 tasks.test {

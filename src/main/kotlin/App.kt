@@ -61,6 +61,7 @@ class App : KoinComponent {
         )
 
         jsonWriter.write("$targetLanguage.translated.json", translatedAllPictograms.pictograms)
+        jsonWriter.write("$targetLanguage.translated_for_upload.json", changedOnlyPictograms.pictograms)
 
         println("Do you really want upload all translated pictograms back to arasaac.org? (y/n)")
         val answer = readln().lowercase()
